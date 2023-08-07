@@ -139,7 +139,7 @@ mod tests {
             Expression::Number(2),
             Expression::Add(vec![Expression::Number(2), Expression::Number(2)]),
         ]);
-        
+
         assert_eq!(schierke.eval(exp, None), Ok(SchierkeResult::Number(6)));
     }
 

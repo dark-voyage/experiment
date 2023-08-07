@@ -1,6 +1,8 @@
 use std::convert::TryFrom;
 use std::fmt::Debug;
 
+/// The expression enum is used to represent the
+/// different types of expressions
 #[derive(PartialEq, Clone, Debug)]
 pub enum Expression {
     Number(i64),
@@ -12,6 +14,7 @@ pub enum Expression {
     Divide(Vec<Expression>),
 }
 
+/// The TryFrom trait is used to convert an Expression to a i64
 impl TryFrom<Expression> for i64 {
     type Error = &'static str;
 
@@ -23,6 +26,7 @@ impl TryFrom<Expression> for i64 {
     }
 }
 
+/// Implement the Display trait for Expression to be able to print it
 impl std::fmt::Display for Expression {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         match self {

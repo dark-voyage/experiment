@@ -2,12 +2,16 @@ use crate::error::SchierkeError;
 use crate::expression::Expression;
 use std::collections::HashMap;
 
+/// Environment
+/// Place where we store variables
 #[derive(PartialEq, Debug, Clone, Default)]
 pub struct Environment {
+    /// Variables HashMap
     variables: HashMap<String, Expression>,
 }
 
 impl Environment {
+    /// Create a new environment instance, if one is not provided
     pub fn new(env: Option<Environment>) -> Environment {
         match env {
             Some(e) => e,
@@ -15,6 +19,7 @@ impl Environment {
         }
     }
 
+    /// Setter | store a variable in the environment
     pub fn define(
         &mut self,
         name: Expression,
@@ -27,6 +32,7 @@ impl Environment {
         value
     }
 
+    /// Getter | lookup a variable in the environment
     pub fn lookup(&self, name: String) -> Result<Expression, SchierkeError> {
         match self.variables.get(name.as_str()) {
             Some(e) => Ok(e.clone()),
@@ -34,7 +40,7 @@ impl Environment {
         }
     }
 
-    // load changes from another environment
+    /// Load changes from another environment
     pub fn load(&mut self, env: Environment) {
         self.variables = env.variables;
     }

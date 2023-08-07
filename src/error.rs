@@ -1,5 +1,6 @@
 use std::fmt::Debug;
 
+/// Error type for Schierke
 #[derive(PartialEq)]
 pub enum SchierkeError {
     ParseError,

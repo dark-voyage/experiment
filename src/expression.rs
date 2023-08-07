@@ -1,40 +1,26 @@
 use std::fmt::Debug;
 
-#[derive(PartialEq)]
+#[derive(PartialEq, Clone, Debug)]
 pub enum Expression {
     Number(i64),
     String(String),
+    Variable(Vec<Expression>),
     Add(Vec<Expression>),
+    Subtract(Vec<Expression>),
+    Multiply(Vec<Expression>),
+    Divide(Vec<Expression>),
 }
 
-impl Debug for Expression {
+impl std::fmt::Display for Expression {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         match self {
             Expression::Number(n) => write!(f, "{}", n),
             Expression::String(s) => write!(f, "{}", s),
-            Expression::Add(v) => {
-                let mut s = String::new();
-                for e in v {
-                    s.push_str(&format!("{:?}", e));
-                }
-                write!(f, "{}", s)
-            }
-        }
-    }
-}
-
-impl Clone for Expression {
-    fn clone(&self) -> Expression {
-        match self {
-            Expression::Number(n) => Expression::Number(*n),
-            Expression::String(s) => Expression::String(s.clone()),
-            Expression::Add(v) => {
-                let mut new_v = Vec::new();
-                for e in v {
-                    new_v.push(e.clone());
-                }
-                Expression::Add(new_v)
-            }
+            Expression::Variable(v) => write!(f, "{}", v[0]),
+            Expression::Add(v) => write!(f, "{} + {}", v[0], v[1]),
+            Expression::Subtract(v) => write!(f, "{} - {}", v[0], v[1]),
+            Expression::Multiply(v) => write!(f, "{} * {}", v[0], v[1]),
+            Expression::Divide(v) => write!(f, "{} / {}", v[0], v[1]),
         }
     }
 }

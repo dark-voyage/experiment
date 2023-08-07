@@ -15,8 +15,15 @@ impl Environment {
         }
     }
 
-    pub fn define(&mut self, name: Expression, value: Expression) -> Expression {
-        self.variables.insert(name.to_string(), value.clone());
+    pub fn define(
+        &mut self,
+        name: Expression,
+        value: Expression
+    ) -> Expression {
+        self.variables.insert(
+            name.to_string(),
+            value.clone(),
+        );
         value
     }
 

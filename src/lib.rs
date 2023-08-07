@@ -1,14 +1,14 @@
+#![allow(clippy::match_single_binding)]
+
 mod environment;
 mod error;
 mod expression;
-mod result;
 
 use environment::Environment;
 use error::SchierkeError;
 use expression::Expression;
-use result::SchierkeResult;
 
-#[derive(Default, PartialEq)]
+#[derive(Default, PartialEq, Clone)]
 pub struct Schierke {
     global: Environment,
 }
@@ -24,23 +24,23 @@ impl Schierke {
         &mut self,
         exp: Expression,
         env: Option<Environment>,
-    ) -> Result<SchierkeResult, SchierkeError> {
+    ) -> Result<Expression, SchierkeError> {
         let mut _e: Environment = match env {
             Some(e) => e,
             None => self.global.clone(),
         };
 
-        let rev = match exp.clone() {
-            Expression::Number(e) => Ok(SchierkeResult::Number(e)),
-            Expression::String(e) => Ok(SchierkeResult::String(e)),
+        let rev: Result<Expression, SchierkeError> = match exp.clone() {
+            Expression::Number(e) => Ok(Expression::Number(e)),
+            Expression::String(e) => Ok(Expression::String(e)),
             Expression::Variable(e) => match e.len() {
                 1 => {
                     let result = _e.lookup(e[0].clone().to_string());
-                    Ok(SchierkeResult::Expression(result.unwrap()))
+                    Ok(result.unwrap())
                 }
                 2 => {
-                    let result = _e.define(e[0].clone(), e[1].clone());
-                    Ok(SchierkeResult::Expression(result))
+                    let result = _e.define(e[0].clone(), self.eval(e[1].clone(), None).unwrap());
+                    Ok(result)
                 }
                 _ => Err(SchierkeError::TooMuchArguments),
             },
@@ -55,33 +55,43 @@ impl Schierke {
                 let mut result = 0;
 
                 result += match self.eval(e[0].clone(), None)? {
-                    SchierkeResult::Number(n) => n,
-                    _ => return Err(SchierkeError::UnknownExpression),
+                    n => match i64::try_from(n) {
+                        Ok(n) => n,
+                        Err(_) => return Err(SchierkeError::UnknownExpression),
+                    },
                 };
 
                 match exp.clone() {
                     Expression::Add(_) => {
                         result += match self.eval(e[1].clone(), None)? {
-                            SchierkeResult::Number(n) => n,
-                            _ => return Err(SchierkeError::UnknownExpression),
+                            n => match i64::try_from(n) {
+                                Ok(n) => n,
+                                Err(_) => return Err(SchierkeError::UnknownExpression),
+                            },
                         };
                     }
                     Expression::Subtract(_) => {
                         result -= match self.eval(e[1].clone(), None)? {
-                            SchierkeResult::Number(n) => n,
-                            _ => return Err(SchierkeError::UnknownExpression),
-                        };
+                            n => match i64::try_from(n) {
+                                Ok(n) => n,
+                                Err(_) => return Err(SchierkeError::UnknownExpression),
+                            }
+                        }
                     }
                     Expression::Multiply(_) => {
                         result *= match self.eval(e[1].clone(), None)? {
-                            SchierkeResult::Number(n) => n,
-                            _ => return Err(SchierkeError::UnknownExpression),
+                            n => match i64::try_from(n) {
+                                Ok(n) => n,
+                                Err(_) => return Err(SchierkeError::UnknownExpression),
+                            },
                         };
                     }
                     Expression::Divide(_) => {
                         result /= match self.eval(e[1].clone(), None)? {
-                            SchierkeResult::Number(n) => n,
-                            _ => return Err(SchierkeError::UnknownExpression),
+                            n => match i64::try_from(n) {
+                                Ok(n) => n,
+                                Err(_) => return Err(SchierkeError::UnknownExpression),
+                            },
                         };
                     }
                     _ => {
@@ -89,7 +99,7 @@ impl Schierke {
                     }
                 };
 
-                Ok(SchierkeResult::Number(result))
+                Ok(Expression::Number(result))
             }
         };
 
@@ -103,15 +113,14 @@ impl Schierke {
 mod tests {
     use super::Expression;
     use super::Schierke;
-    use crate::result::SchierkeResult;
 
     #[test]
     fn number() {
         let mut schierke = Schierke::new();
 
         // Number expression
-        let exp = Expression::Number(2);
-        assert_eq!(schierke.eval(exp, None), Ok(SchierkeResult::Number(2)));
+        let expression = Expression::Number(2);
+        assert_eq!(schierke.eval(expression, None), Ok(Expression::Number(2)));
     }
 
     #[test]
@@ -119,10 +128,10 @@ mod tests {
         let mut schierke = Schierke::new();
 
         // String expression
-        let exp = Expression::String("hello".to_string());
+        let expression = Expression::String("hello".to_string());
         assert_eq!(
-            schierke.eval(exp, None),
-            Ok(SchierkeResult::String("hello".to_string()))
+            schierke.eval(expression, None),
+            Ok(Expression::String("hello".to_string()))
         );
     }
 
@@ -131,16 +140,21 @@ mod tests {
         let mut schierke = Schierke::new();
 
         // Add expression
-        let exp = Expression::Add(vec![Expression::Number(2), Expression::Number(2)]);
-        assert_eq!(schierke.eval(exp, None), Ok(SchierkeResult::Number(4)));
+        let expression = Expression::Add(vec![Expression::Number(2), Expression::Number(2)]);
+        assert_eq!(schierke.eval(expression, None), Ok(Expression::Number(4)));
+    }
+
+    #[test]
+    fn add_complex() {
+        let mut schierke = Schierke::new();
 
         // More complex add expression
-        let exp = Expression::Add(vec![
+        let expression = Expression::Add(vec![
             Expression::Number(2),
             Expression::Add(vec![Expression::Number(2), Expression::Number(2)]),
         ]);
 
-        assert_eq!(schierke.eval(exp, None), Ok(SchierkeResult::Number(6)));
+        assert_eq!(schierke.eval(expression, None), Ok(Expression::Number(6)));
     }
 
     #[test]
@@ -148,16 +162,21 @@ mod tests {
         let mut schierke = Schierke::new();
 
         // Subtract expression
-        let exp = Expression::Subtract(vec![Expression::Number(2), Expression::Number(2)]);
-        assert_eq!(schierke.eval(exp, None), Ok(SchierkeResult::Number(0)));
+        let expression = Expression::Subtract(vec![Expression::Number(2), Expression::Number(2)]);
+        assert_eq!(schierke.eval(expression, None), Ok(Expression::Number(0)));
+    }
+
+    #[test]
+    fn subtract_complex() {
+        let mut schierke = Schierke::new();
 
         // More complex subtract expression
-        let exp = Expression::Subtract(vec![
+        let expression = Expression::Subtract(vec![
             Expression::Number(2),
             Expression::Subtract(vec![Expression::Number(2), Expression::Number(2)]),
         ]);
 
-        assert_eq!(schierke.eval(exp, None), Ok(SchierkeResult::Number(2)));
+        assert_eq!(schierke.eval(expression, None), Ok(Expression::Number(2)));
     }
 
     #[test]
@@ -165,15 +184,20 @@ mod tests {
         let mut schierke = Schierke::new();
 
         // Multiply expression
-        let exp = Expression::Multiply(vec![Expression::Number(4), Expression::Number(3)]);
-        assert_eq!(schierke.eval(exp, None), Ok(SchierkeResult::Number(12)));
+        let expression = Expression::Multiply(vec![Expression::Number(4), Expression::Number(3)]);
+        assert_eq!(schierke.eval(expression, None), Ok(Expression::Number(12)));
+    }
+
+    #[test]
+    fn multiply_complex() {
+        let mut schierke = Schierke::new();
 
         // More complex multiply expression
-        let exp = Expression::Multiply(vec![
+        let expression = Expression::Multiply(vec![
             Expression::Number(4),
             Expression::Multiply(vec![Expression::Number(3), Expression::Number(2)]),
         ]);
-        assert_eq!(schierke.eval(exp, None), Ok(SchierkeResult::Number(24)));
+        assert_eq!(schierke.eval(expression, None), Ok(Expression::Number(24)));
     }
 
     #[test]
@@ -181,20 +205,30 @@ mod tests {
         let mut schierke = Schierke::new();
 
         // Variable set expression
-        let exp = Expression::Variable(vec![
+        let expression = Expression::Variable(vec![
             Expression::String("x".to_string()),
             Expression::Number(2),
         ]);
-        assert_eq!(
-            schierke.eval(exp, None),
-            Ok(SchierkeResult::Expression(Expression::Number(2)))
-        );
+        assert_eq!(schierke.eval(expression, None), Ok(Expression::Number(2)));
 
         // Variable get expression
-        let exp = Expression::Variable(vec![Expression::String("x".to_string())]);
-        assert_eq!(
-            schierke.eval(exp, None),
-            Ok(SchierkeResult::Expression(Expression::Number(2)))
-        );
+        let expression = Expression::Variable(vec![Expression::String("x".to_string())]);
+        assert_eq!(schierke.eval(expression, None), Ok(Expression::Number(2)));
+    }
+
+    #[test]
+    fn variable_complex() {
+        let mut schierke = Schierke::new();
+
+        // Variable set expression but way more complex
+        let expression = Expression::Variable(vec![
+            Expression::String("x".to_string()),
+            Expression::Add(vec![Expression::Number(2), Expression::Add(vec![Expression::Number(2), Expression::Number(2)])]),
+        ]);
+        assert_eq!(schierke.eval(expression, None), Ok(Expression::Number(6)));
+
+        // Variable get expression but way more complex
+        let expression = Expression::Variable(vec![Expression::String("x".to_string())]);
+        assert_eq!(schierke.eval(expression, None), Ok(Expression::Number(6)));
     }
 }

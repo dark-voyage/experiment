@@ -1,3 +1,4 @@
+use std::convert::TryFrom;
 use std::fmt::Debug;
 
 #[derive(PartialEq, Clone, Debug)]
@@ -9,6 +10,17 @@ pub enum Expression {
     Subtract(Vec<Expression>),
     Multiply(Vec<Expression>),
     Divide(Vec<Expression>),
+}
+
+impl TryFrom<Expression> for i64 {
+    type Error = &'static str;
+
+    fn try_from(value: Expression) -> Result<Self, Self::Error> {
+        match value {
+            Expression::Number(n) => Ok(n),
+            _ => Err("Cannot convert non-number Expression to i64"),
+        }
+    }
 }
 
 impl std::fmt::Display for Expression {

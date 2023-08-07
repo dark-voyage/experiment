@@ -11,7 +11,7 @@ impl Environment {
     pub fn new(env: Option<Environment>) -> Environment {
         match env {
             Some(e) => e,
-            None => Environment::default(),
+            None => Default::default(),
         }
     }
 

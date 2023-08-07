@@ -16,7 +16,7 @@ pub struct Schierke {
 impl Schierke {
     pub fn new() -> Schierke {
         Schierke {
-            global: Environment::default(),
+            global: Default::default(),
         }
     }
 

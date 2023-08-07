@@ -40,7 +40,6 @@ impl Schierke {
                 }
                 2 => {
                     let result = _e.define(e[0].clone(), e[1].clone());
-                    println!("{:?}", result);
                     Ok(SchierkeResult::Expression(result))
                 }
                 _ => Err(SchierkeError::TooMuchArguments),
@@ -140,9 +139,7 @@ mod tests {
             Expression::Number(2),
             Expression::Add(vec![Expression::Number(2), Expression::Number(2)]),
         ]);
-
-        println!("{:?}", exp);
-
+        
         assert_eq!(schierke.eval(exp, None), Ok(SchierkeResult::Number(6)));
     }
 
@@ -188,10 +185,16 @@ mod tests {
             Expression::String("x".to_string()),
             Expression::Number(2),
         ]);
-        assert_eq!(schierke.eval(exp, None), Ok(SchierkeResult::Expression(Expression::Number(2))));
+        assert_eq!(
+            schierke.eval(exp, None),
+            Ok(SchierkeResult::Expression(Expression::Number(2)))
+        );
 
         // Variable get expression
         let exp = Expression::Variable(vec![Expression::String("x".to_string())]);
-        assert_eq!(schierke.eval(exp, None), Ok(SchierkeResult::Expression(Expression::Number(2))));
+        assert_eq!(
+            schierke.eval(exp, None),
+            Ok(SchierkeResult::Expression(Expression::Number(2)))
+        );
     }
 }

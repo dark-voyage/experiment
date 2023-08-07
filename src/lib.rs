@@ -53,5 +53,8 @@ mod tests {
         assert_eq!(schierke.eval(Expression::Number(2)), Ok(super::SchierkeResult::Number(2)));
         assert_eq!(schierke.eval(Expression::String("hello".to_string())), Ok(super::SchierkeResult::String("hello".to_string())));
         assert_eq!(schierke.eval(Expression::Add(vec![Expression::Number(2), Expression::Number(2)])), Ok(super::SchierkeResult::Number(4)));
+
+        // Let's get crazy!
+        assert_eq!(schierke.eval(Expression::Add(vec![Expression::Number(2), Expression::Add(vec![Expression::Number(2), Expression::Number(2)])])), Ok(super::SchierkeResult::Number(6)));
     }
 }

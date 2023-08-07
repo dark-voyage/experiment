@@ -25,12 +25,12 @@ impl Schierke {
         exp: Expression,
         env: Option<Environment>,
     ) -> Result<SchierkeResult, SchierkeError> {
-        let _e: &mut Environment = match env {
-            Some(mut e) => &mut e,
-            None => &mut self.global,
+        let mut _e: Environment = match env {
+            Some(e) => e,
+            None => self.global.clone(),
         };
 
-        match exp.clone() {
+        let rev = match exp.clone() {
             Expression::Number(e) => Ok(SchierkeResult::Number(e)),
             Expression::String(e) => Ok(SchierkeResult::String(e)),
             Expression::Variable(e) => match e.len() {
@@ -92,7 +92,11 @@ impl Schierke {
 
                 Ok(SchierkeResult::Number(result))
             }
-        }
+        };
+
+        self.global.load(_e);
+
+        rev
     }
 }
 

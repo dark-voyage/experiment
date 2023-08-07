@@ -26,4 +26,9 @@ impl Environment {
             None => Err(SchierkeError::UndefinedVariable),
         }
     }
+
+    // load changes from another environment
+    pub fn load(&mut self, env: Environment) {
+        self.variables = env.variables;
+    }
 }
